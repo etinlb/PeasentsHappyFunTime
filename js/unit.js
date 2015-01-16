@@ -1,5 +1,12 @@
+/**
+ * Contains all the components that can be used to create game objects.
+ * There is no requirement of the components other than that they should
+ * have a type variable as that is used for overriding specific properties in
+ * the creation in unitTemplates
+ */
 function Unit() {
     this.color = "#FF0000";
+    this.type = "Unit";
     // this.rect = new Rect(x, y, width, height);
 }
 
@@ -7,9 +14,12 @@ Unit.prototype = {
 
     click: function(ev, rightClick) {
         // Player clicked inside the canvas
+        console.log("click event")
     },
 
     draw: function(context) {
+        // console.log("drawing this ");
+        // console.log(this);
         context.fillStyle = this.color;
         context.fillRect(this.x, this.y, this.width, this.height);
     },
@@ -19,7 +29,16 @@ Unit.prototype = {
     }
 }
 
-function Damageable() {}
+function Selectable() {
+    this.type = "Selectable";
+}
+Selectable.prototype = {
+
+}
+
+function Damageable() {
+    this.type = "Damageable";
+}
 
 Damageable.prototype = {
     damage: function(amount) {
@@ -31,6 +50,7 @@ function Attacker() {
     this.delay = 10; // number of frames to wait until able to attack again
     this.attackDistance = 20;
     this.safeDistance = 10; // distance to keep from the 
+    this.type = "Attacker";
 }
 
 Attacker.prototype = {
@@ -58,8 +78,8 @@ Attacker.prototype = {
     },
 
     moveTowardsEngaged: function() {
-        if(distance(this, this.engaged) > this.safeDistance)
-            moveTowards(this, this.engaged);    
+        if (distance(this, this.engaged) > this.safeDistance)
+            moveTowards(this, this.engaged);
     },
 
     attack: function() {
@@ -74,8 +94,8 @@ Attacker.prototype = {
         }
     },
 
-    update: function(){
-        if(this.engaged){
+    update: function() {
+        if (this.engaged) {
             this.moveTowardsEngaged();
             this.attack();
         }

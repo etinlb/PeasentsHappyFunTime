@@ -71,7 +71,6 @@ Mouse.prototype = {
         $mouseCanvas.click(function(ev) {
             self.click(ev,false);
             self.dragSelect = false;      
-            console.log("here")          
             return false;
         });
         

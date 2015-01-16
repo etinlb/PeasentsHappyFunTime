@@ -61,6 +61,7 @@ Game.prototype = {
 		// draw the game objects
 		callToNestedObject(this.gameObjects, 'draw', this.foregroundcontext);
 
+
 		this.mouse.draw(this.foregroundcontext);
 		window.requestAnimationFrame(this.drawLoop); //.bind(this));	
 	},
@@ -71,39 +72,22 @@ Game.prototype = {
 	},
 
 	debugShit: function() {
-		var entity1 = this.createEntity({hp:10}, 
-			[new Damageable(), new Rect(20, 20, 20, 20), new Unit(), new Attacker()]);
-		var entity2 = this.createEntity({hp:10}, [new Damageable(), new Rect(100, 100, 20, 20), new Unit()]);
-		entity1.engageSpecific(entity2);
-		console.log(entity1);
+		// var entity1 = this.createEntity({hp:10}, 
+		// 	[new Damageable(), new Rect(20, 20, 20, 20), new Unit(), new Attacker()]);
+		var entity2 = new Building();
+		var entity1 = new AttackUnit();
 		console.log(entity2);
-		// var unit = new Unit(20, 20, 10, 10);
+		console.log(entity1);
+		entity1.engageSpecific(entity2);
 
 		// var building = new Unit(300, 300, 200, 200);
 		// building.color = "#000077";
 		this.gameObjects['unit'] = [entity1];
 		this.gameObjects['building'] = [entity2];
+		console.log(this.gameObjects)
 		// console.log(rect.center());
 	},
 
-	createEntity: function(properties, components) {
-		var prop;
-		var entity = {};
 
-		for (prop in properties) {
-			entity[prop] = properties[prop];
-		}
-
-		components.forEach(function(component) {
-			for (prop in component) {
-				// if (entity.hasOwnProperty(prop)) {
-				// 	throw "Entity property conflict! " + prop;
-				// }
-				entity[prop] = component[prop];
-			}
-		});
-
-		return entity;
-	},
 
 };

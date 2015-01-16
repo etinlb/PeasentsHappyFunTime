@@ -65,12 +65,5 @@ Rect.prototype = {
       'x': this.right(),
       'y': this.bottom
     }
-  },
-  
-  draw: function(ctx) {
-    /**
-     * primative draw function.
-     */
-    // 
   }
 };
