@@ -26,6 +26,7 @@ function Game() {
 	this.panningThreshold = 60; // Distance from edge of canvas at which panning starts
 	this.panningSpeed = 10; // 
 	this.gameObjects = {};
+	this.actionQueue = []
 	console.log(this.mouse);
 };
 
@@ -49,8 +50,14 @@ Game.prototype = {
 	},
 
 	gameLoop: function() {
-		window.requestAnimationFrame(this.gameLoop); //.bind(this));	
+		// do mouse stuff
+		var mouseEvents = this.mouse.getMouseInfo();
+		console.log(mouseEvents);
+		if(mouseEvents.click.length > 0){
+			return;
+		}
 		callToNestedObject(this.gameObjects, 'update', this.foregroundcontext);
+		window.requestAnimationFrame(this.gameLoop); //.bind(this));	
 		return;
 	},
 
