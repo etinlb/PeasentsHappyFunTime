@@ -1,6 +1,6 @@
 /**
- * Game object constructors. They are just a grouping of component objects
- * It
+ * Game object constructors. They are just a grouping of component objects that 
+ * form an actual game object. 
  */
 function AttackUnit() {
   this.properties = {
@@ -13,11 +13,20 @@ function AttackUnit() {
       new Unit(),
       new Attacker()
     ]
-    // If there is a naming conflict in properties, set which to use here
-  this.overLoadedPrecedence = {
-    "update": "Attacker"
+  // If there is a naming conflict in properties, set which to use here
+  // this.overRide = {
+  //   "update": "Attacker"
+  // }
+  this.overload = {"update":{}};       // list of functions or properties that exist in multiple components
+                                       // that will be kept and keyed to the name of the component. Y
+  createEntityFromTemplate(this);   // utility.js
+  this.components = [];
+  this.properties = [];
+}
+AttackUnit.prototype = {
+  update: function(){
+    this.overload.update.Attacker(); // calls update for attacker
   }
-  createEntityFromTemplate(this); // utility.js
 }
 
 function Building() {
@@ -26,6 +35,7 @@ function Building() {
     hp: 10,
     color: "#0077ff"
   }
+  this.overload = {};       // list of functions or properties that exist in multiple components
   this.components = [
     new Damageable(),
     new Rect(200, 200, 20, 20),

@@ -24,6 +24,10 @@ function createEntity(properties, components) {
 }
 
 function createEntityFromTemplate(templateObj) {
+  /**
+   * A way to fake inheritance with composition. This could be very slow now that I'm doing it more
+   * but it is kind of a cool idea. I need to know the speed of _.bind on subsequent calls to the function
+   */
   var prop;
   console.log(templateObj);
   for (prop in templateObj.properties) {
@@ -33,13 +37,18 @@ function createEntityFromTemplate(templateObj) {
   templateObj.components.forEach(function(component) {
     for (prop in component) {
       if (templateObj.hasOwnProperty(prop)) {
-        // continue
-        if(templateObj.overLoadedPrecedence !== undefined && templateObj.overLoadedPrecedence[prop] === component.type ){
-          console.log("setting precedenc" + prop)
+        // check overriding
+        console.log("has " + prop);
+        if(templateObj.overRide !== undefined && templateObj.overRide[prop] === component.type ){
+          console.log("setting precedence" + prop)
           templateObj[prop] = component[prop];          
-        }
+        } 
           // throw "Entity property conflict! " + prop;
-      }else{
+      }else if (templateObj.overload[prop] !== undefined){
+        templateObj.overload[prop][component.type] = component[prop];
+        templateObj.overload[prop][component.type] =  _.bind(templateObj.overload[prop][component.type], templateObj);
+        console.log("here");
+      } else{
         templateObj[prop] = component[prop];
       }
     }
