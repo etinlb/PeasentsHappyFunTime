@@ -14,22 +14,23 @@ function Mouse() {
   this.dragSelect = false;
   // whether or not the mouse is inside the canvas region
   this.insideCanvas = false;
-  this.eventQueue = {
-    click:[],
-    move:[],
-    up:[]
-  };
+  this.clearQueue(); // sets the event queue
 }
 
 Mouse.prototype = {
   click: function(ev, rightClick) {
-    console.log("in click");
-    // console.log(this);
-    // console.log(this.x);
-    // console.log(this.y);
-    console.log(rightClick);
     this.dragSelect = false;
-    this.eventQueue.click.push([this.x, this.y]);
+    if (rightClick) {
+      this.addToQueue("rightClick", {
+        x: this.x,
+        y: this.y
+      })
+    } else {
+      this.addToQueue("click", {
+        x: this.x,
+        y: this.y
+      })
+    }
   },
 
   mouseMove: function(ev) {
@@ -46,6 +47,7 @@ Mouse.prototype = {
     } else {
       this.dragSelect = false;
     }
+    // this.addToQueue("move", [this.x, this.y]); // TODO: put map scrolling in
   },
 
   mouseDown: function(ev) {
@@ -55,12 +57,17 @@ Mouse.prototype = {
       this.dragY = this.gameY;
       ev.preventDefault();
     }
+    // this.addToQueue("down", {}); // 
     return false;
   },
 
   mouseUp: function(ev) {
     var shiftPressed = ev.shiftKey;
+    // console.log(ev);
     if (ev.which == 1) {
+      if (this.dragSelect) {
+        this.addToQueue("drag", this._getBox()); // give up event since it was a mouse drag
+      }
       //Left key was released                
       this.buttonPressed = false;
       this.dragSelect = false;
@@ -68,12 +75,32 @@ Mouse.prototype = {
     return false;
   },
 
-  clearQueue : function(){
+  clearQueue: function() {
+    /**
+     * I don't know if this is the best way to handle mouse input but it makes sense to me.
+     * The events are supposed to be defined as follows, actual implementation may vary depending
+     * on how much well this coffee high lasts
+     * click : a click event, gets when an browser down and up even happen and the mouse didn't move in between
+     * move  : when the mouse moves
+     * @type {Object}
+     */
     this.eventQueue = {
-      click:[],
-      move:[],
-      up:[]
+      click: [],
+      rightClick: [],
+      move: [],
+      down: [],
+      up: [],
+      drag: []
     };
+    this.eventFlag = 0; // low means nothing to process
+  },
+
+  addToQueue: function(whichQueue, infoObj) {
+    /**
+     * add the info obj to the queue
+     */
+    this.eventQueue[whichQueue].push(infoObj);
+    this.eventFlag = 1;
   },
 
   getMouseInfo: function() {
@@ -88,16 +115,25 @@ Mouse.prototype = {
   draw: function(context) {
     if (this.dragSelect) {
       // console.
-      var x = Math.min(this.gameX, this.dragX);
-      var y = Math.min(this.gameY, this.dragY);
-      var width = Math.abs(this.gameX - this.dragX)
-      var height = Math.abs(this.gameY - this.dragY)
+      var rectBox = this._getBox();
       context.strokeStyle = 'white';
-      context.strokeRect(x, y, width, height);
+      context.strokeRect(rectBox.x, rectBox.y, rectBox.width, rectBox.height);
     }
     context.strokeStyle = 'white';
     context.strokeRect(this.x, this.y, 5, 5);
 
+  },
+
+  _getBox: function() {
+    /**
+     * returns the mouse drag select box
+     */
+    var rect = {}
+    rect.x = Math.min(this.gameX, this.dragX);
+    rect.y = Math.min(this.gameY, this.dragY);
+    rect.width = Math.abs(this.gameX - this.dragX)
+    rect.height = Math.abs(this.gameY - this.dragY)
+    return rect;
   },
 
   calculateGameCoordinates: function(offsetX, offsetY) {
@@ -111,6 +147,10 @@ Mouse.prototype = {
   },
 
   init: function(canvasId, callback) {
+    /**
+     * Set the jquery callbacks and remember the mouse canvas
+     * @type {[type]}
+     */
     this.$mouseCanvas = $(canvasId);
     // console.log($mouseCanvas);
     var self = this; // Significantly faster than binding to this http://jsperf.com/bind-vs-closure-setup/6

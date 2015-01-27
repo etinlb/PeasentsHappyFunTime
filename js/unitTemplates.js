@@ -9,7 +9,7 @@ function AttackUnit() {
   }
   this.components = [
       new Damageable(),
-      new Rect(20, 20, 20, 20),
+      new Rect(220, 500, 20, 20),
       new Unit(),
       new Attacker()
     ]

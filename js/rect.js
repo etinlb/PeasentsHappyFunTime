@@ -65,5 +65,21 @@ Rect.prototype = {
       'x': this.right(),
       'y': this.bottom
     }
-  }
+  },
+
+  containsPoint: function(point){
+    console.log(point);
+    return point.x <= this.right() && 
+           point.x >= this.x && 
+           point.y <= this.bottom() && 
+           point.y >= this.y;
+  },
+
+  collideRect: function(otherRect){
+    return this.x < otherRect.right() &&
+           this.right() > otherRect.x &&
+           this.y < otherRect.bottom() &&
+           this.bottom() > otherRect.y;
+  },
+
 };
