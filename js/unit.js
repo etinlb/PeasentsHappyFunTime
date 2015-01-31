@@ -82,11 +82,14 @@ Attacker.prototype = {
     if (distance(this, this.engaged) > this.safeDistance)
       moveTowards(this, this.engaged);
   },
-  giveMoveCommand: function(point) {
+  giveMoveCommand: function(point, game) {
     /**
      * informs the unit it needs to move to the point passed in
+     * TODO: Hack adding game since I need some functions that are in the game
+     * object that need to go somewhere else
      */
     this.movingTo = point;
+    this.game = game;
   },
 
   attack: function() {
@@ -107,14 +110,34 @@ Attacker.prototype = {
       this.attack();
       console.log(this.collideRect(this.engaged));
     } else if (this.movingTo) {
-      console.log("Moving to");
-      moveTowards(this, this.movingTo);
-      if (distance(this, this.movingTo) < this.attackDistance) {
-        // TODO: this is wrong, but I'm not sure what I need yet
+      if(!this.doPath()){
         this.movingTo = false;
       }
     }
-  }
+  },
+
+  doPath: function(){
+    console.log("doing path");
+    var start = this.game.getGrid(this.center());
+    var end = this.game.getGrid(this.movingTo);
+    var path = AStar(this.game.mapGrid, start, end, 'Euclidean');
+    if (path.length>1){
+      var nextStep = {x:path[1].x,y:path[1].y};  // next step in GRID space
+      moveTowardsInGrid(this, nextStep, this.game);
+      // newDirection = findAngle(nextStep,this,this.directions);    
+    } else if(start[0]==end[0] && start[1] == end[1]){ 
+      // Reached destination grid;
+      // path = [this,destination];               
+      // newDirection = findAngle(destination,this,this.directions);
+      return false;
+    } else { 
+      // There is no path
+      return false;
+    }
+
+    return true;
+
+  },
 }
 
 
@@ -141,12 +164,17 @@ function distance(point1, point2) {
 
   return Math.sqrt(xs + ys);
 }
+function moveTowardsInGrid(obj, target, game){
+  // var start = game.getCenterOfGrid(obj);
+  var end = game.getCenterOfGrid(target);
+  moveTowards(obj, end);
+}
 
 function moveTowards(obj, target) {
-  var y = target.y - obj.y;
-  var x = target.x - obj.x;
+  var y = target.y - obj.centery();
+  var x = target.x - obj.centerx();
   var distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-  var speed = 1;
+  var speed = 3;
   var fullCircle = Math.PI * 2;
 
   // what's the different between our orientation

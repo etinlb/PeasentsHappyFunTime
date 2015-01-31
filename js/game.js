@@ -34,7 +34,7 @@ function Game() {
 
   this.gameObjects = {};
   this.actionQueue = []
-  // console.log(this.mouse);
+    // console.log(this.mouse);
 };
 
 Game.prototype = {
@@ -60,19 +60,24 @@ Game.prototype = {
 
   gameLoop: function() {
     // do mouse stuff
-    if(this.mouse.eventFlag){
+    if (this.mouse.eventFlag) {
       var mouseEvents = this.mouse.getMouseInfo();
       console.log(mouseEvents);
-      if(mouseEvents.drag.length > 0){
+      if (mouseEvents.drag.length > 0) {
         // should only need the last drag event
-        this.selectedObjs = this.selectObjs(mouseEvents.drag[mouseEvents.drag.length-1]);
-      }else if(mouseEvents.rightClick.length > 0 && this.selectedObjs.length > 0){
+        this.selectedObjs = this.selectObjs(mouseEvents.drag[mouseEvents.drag.length - 1]);
+      } else if (mouseEvents.rightClick.length > 0 && this.selectedObjs.length > 0) {
+        var mouseGridPoint = mouseEvents.rightClick[mouseEvents.rightClick.length - 1];
         for (var i = this.selectedObjs.length - 1; i >= 0; i--) {
-          this.selectedObjs[i].giveMoveCommand(mouseEvents.rightClick[mouseEvents.rightClick.length - 1])
+          this.selectedObjs[i].giveMoveCommand(mouseGridPoint, this);
         };
+      } else if (mouseEvents.click.length > 0) {
+        this.getGrid(mouseEvents.click[0]);
+
       }
     }
     callToNestedObject(this.gameObjects, 'update', this.foregroundcontext);
+    // return;
     window.requestAnimationFrame(this.gameLoop); //.bind(this));  
     return;
   },
@@ -178,7 +183,7 @@ Game.prototype = {
     this.gameObjects['unit'] = [entity1, entity3]; // entity2];
     this.gameObjects['building'] = [entity2];
     console.log(this.gameObjects)
-    // console.log(rect.center());
+      // console.log(rect.center());
   },
 
   debugDraw: function() {
