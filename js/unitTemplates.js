@@ -2,7 +2,8 @@
  * Game object constructors. They are just a grouping of component objects that 
  * form an actual game object. 
  */
-function AttackUnit() {
+function AttackUnit(game) {
+  this.game = game;
   this.properties = {
     type: "AttackUnit",
     hp: 10
@@ -29,7 +30,8 @@ AttackUnit.prototype = {
   }
 }
 
-function Building() {
+function Building(game) {
+  this.game = game;
   this.properties = {
     type: "Building",
     hp: 10,

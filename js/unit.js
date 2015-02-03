@@ -21,7 +21,14 @@ Unit.prototype = {
     // console.log("drawing this ");
     // console.log(this);
     context.fillStyle = this.color;
-    context.fillRect(this.x, this.y, this.width, this.height);
+    // var x = (this.x*this.game.gridSize)-this.game.offsetX-this.pixelOffsetX;
+    // var y = (this.y*this.game.gridSize)-this.game.offsetY-this.pixelOffsetY;
+    var x = (this.x)-this.game.offsetX;
+    var y = (this.y)-this.game.offsetY;
+    this.drawingX = x;
+    this.drawingY = y;
+
+    context.fillRect(x, y, this.width, this.height);
   },
 
   update: function() {
