@@ -1,4 +1,4 @@
-function Mouse() {
+function Mouse(game) {
   // x,y coordinates of mouse relative to top left corner of canvas
   this.x = 0;
   this.y = 0;
@@ -15,6 +15,7 @@ function Mouse() {
   // whether or not the mouse is inside the canvas region
   this.insideCanvas = false;
   this.clearQueue(); // sets the event queue
+  this.game = game;
 }
 
 Mouse.prototype = {
@@ -117,7 +118,7 @@ Mouse.prototype = {
       // console.
       var rectBox = this._getBox();
       context.strokeStyle = 'white';
-      context.strokeRect(rectBox.x, rectBox.y, rectBox.width, rectBox.height);
+      context.strokeRect(rectBox.x-this.game.offsetX, rectBox.y - this.game.offsetY, rectBox.width, rectBox.height);
     }
     context.strokeStyle = 'white';
     context.strokeRect(this.x, this.y, 5, 5);
@@ -135,15 +136,30 @@ Mouse.prototype = {
     rect.height = Math.abs(this.gameY - this.dragY)
     return rect;
   },
+  // _getDrawBox: function() {
+  //   /**
+  //    * returns the mouse drag select box
+  //    */
+  //   var rect = {}
+  //   rect.x = Math.min(this.gameX, this.dragX);
+  //   rect.y = Math.min(this.gameY, this.dragY);
+  //   rect.width = Math.abs(this.gameX - this.dragX)
+  //   rect.height = Math.abs(this.gameY - this.dragY)
+  //   return rect;
+  // },
 
   calculateGameCoordinates: function(offsetX, offsetY) {
-    // console.log(this);
-    var gridSize = 20; // Grid size is just a way to get which tile you are on
+     var gridSize = 20; // Grid size is just a way to get which tile you are on
     this.gameX = this.x + offsetX;
     this.gameY = this.y + offsetY;
+    // console.log(this);
+    this.gameX = this.x + this.game.offsetX;
+    this.gameY = this.y + this.game.offsetY;
 
-    this.gridX = Math.floor((this.gameX) / gridSize); // do something with gridSize
-    this.gridY = Math.floor((this.gameY) / gridSize);
+    this.gridX = Math.floor((this.gameX) / this.game.gridSize); // do something with gridSize
+    this.gridY = Math.floor((this.gameY) / this.game.gridSize);
+    // this.gridX = Math.floor((this.gameX) / gridSize); // do something with gridSize
+    // this.gridY = Math.floor((this.gameY) / gridSize);
   },
 
   init: function(canvasId, callback) {

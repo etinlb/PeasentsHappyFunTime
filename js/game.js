@@ -14,7 +14,7 @@ var settings = {
 
 function Game() {
   this.loader = new Loader('#loadingscreen')
-  this.mouse = new Mouse();
+  this.mouse = new Mouse(this);
   // this.menu = new Menu();s
   // The map is broken into square tiles of this size (20 pixels x 20 pixels)
   this.gridSize = 20;
@@ -31,6 +31,7 @@ function Game() {
   this.running = true;
   this.mapGrid = [];
   console.log(this.mapGrid);
+  this.currentMapImage = this.loader.loadImage("images/maps/level-one.png");
 
   this.gameObjects = {};
   this.actionQueue = []
@@ -41,7 +42,7 @@ Game.prototype = {
   init: function() {
     this.backgroundCanvas = document.getElementById(settings.gameCanvasId);
     this.foregroundCanvas = document.getElementById(settings.mouseCanvasId);
-    this.backgroundcontext = this.backgroundCanvas.getContext('2d');
+    this.backgroundContext = this.backgroundCanvas.getContext('2d');
     this.foregroundcontext = this.foregroundCanvas.getContext('2d');
     this.loader.init();
     this.mouse.init('#' + settings.mouseCanvasId); // 
@@ -84,16 +85,22 @@ Game.prototype = {
 
   drawLoop: function() {
     if (this.running) {
-
+      this.handlePanning();
       // fast way to clear the foreground canvas
       this.foregroundCanvas.width = this.foregroundCanvas.width;
 
       // draw the game objects
       callToNestedObject(this.gameObjects, 'draw', this.foregroundcontext);
+      if(this.refreshBackground){      
+        this.backgroundContext.drawImage(this.currentMapImage, this.offsetX, this.offsetY, 
+                                         this.foregroundCanvas.width, this.foregroundCanvas.height, 0, 0,
+                                         this.foregroundCanvas.width, this.foregroundCanvas.height);
+        this.refreshBackground = false;
+      }
+
       if (settings.debug) {
         this.debugDraw();
       }
-
       this.mouse.draw(this.foregroundcontext);
       window.requestAnimationFrame(this.drawLoop); //.bind(this));  
     }
@@ -135,6 +142,32 @@ Game.prototype = {
       // this.mapGrid[y][x] = 1;      
   },
 
+  handlePanning: function(){
+    if(this.mouse.x<=this.panningThreshold){
+      if (this.offsetX>=this.panningSpeed){
+        this.refreshBackground = true;
+        this.offsetX -= this.panningSpeed;    
+      }
+    } else if (this.mouse.x>= this.foregroundCanvas.width - this.panningThreshold){
+      if (this.offsetX + this.foregroundCanvas.width + this.panningSpeed <= this.currentMapImage.width){
+        this.refreshBackground = true;
+        this.offsetX += this.panningSpeed;
+      }
+    }
+  
+    if(this.mouse.y<=this.panningThreshold){
+      if (this.offsetY>=this.panningSpeed){
+        this.refreshBackground = true;
+        this.offsetY -= this.panningSpeed;
+      }
+    } else if (this.mouse.y>= this.foregroundCanvas.height - this.panningThreshold){
+      if (this.offsetY + this.foregroundCanvas.height + this.panningSpeed <= this.currentMapImage.height){
+        this.refreshBackground = true;
+        this.offsetY += this.panningSpeed;
+      }
+    } 
+  },
+
   getCenterOfGrid: function(gridSquare) {
     /**
      * Opposite of getGrid
@@ -152,9 +185,9 @@ Game.prototype = {
   debugInit: function() {
     // var entity1 = this.createEntity({hp:10}, 
     //  [new Damageable(), new Rect(20, 20, 20, 20), new Unit(), new Attacker()]);
-    var entity2 = new Building();
-    var entity1 = new AttackUnit();
-    var entity3 = new AttackUnit();
+    var entity2 = new Building(this);
+    var entity1 = new AttackUnit(this);
+    var entity3 = new AttackUnit(this);
     entity3.x = entity1.x + 100;
     console.log(entity2);
     console.log(entity1);
@@ -192,14 +225,14 @@ Game.prototype = {
      */
     for (var y = 0; y < this.mapGrid.length; y++) {
       for (var x = 0; x < this.mapGrid[y].length; x++) {
-        this.backgroundcontext.fillStyle = "#ffffff"
+        this.backgroundContext.fillStyle = "#ffffff"
         if (this.mapGrid[y][x] == 1) {
-          this.backgroundcontext.fillRect(x * this.gridSize, y * this.gridSize, this.gridSize, this.gridSize);
+          this.backgroundContext.fillRect(x * this.gridSize, y * this.gridSize, this.gridSize, this.gridSize);
         } else if (this.mapGrid[y][x] == 2) {
-          this.backgroundcontext.fillStyle = "#777777"
-          this.backgroundcontext.fillRect(x * this.gridSize, y * this.gridSize, this.gridSize, this.gridSize);
+          this.backgroundContext.fillStyle = "#777777"
+          this.backgroundContext.fillRect(x * this.gridSize, y * this.gridSize, this.gridSize, this.gridSize);
         } else {
-          this.backgroundcontext.strokeRect(x * this.gridSize, y * this.gridSize, this.gridSize, this.gridSize);
+          this.backgroundContext.strokeRect(x * this.gridSize, y * this.gridSize, this.gridSize, this.gridSize);
         }
       }
     };
