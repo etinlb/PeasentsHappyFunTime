@@ -18,8 +18,6 @@ function Game() {
   // this.menu = new Menu();s
   // The map is broken into square tiles of this size (20 pixels x 20 pixels)
   this.gridSize = 20;
-  this.width = 800;
-  this.height = 600;
   // Store whether or not the background moved and needs to be redrawn
   this.refreshBackground = true;
   // A control loop that runs at a fixed period of time 
@@ -32,6 +30,8 @@ function Game() {
   this.mapGrid = [];
   console.log(this.mapGrid);
   this.currentMapImage = this.loader.loadImage("images/maps/level-one.png");
+  this.width = this.currentMapImage.width;
+  this.height = this.currentMapImage.height;
 
   this.gameObjects = {};
   this.actionQueue = []
@@ -69,8 +69,12 @@ Game.prototype = {
         this.selectedObjs = this.selectObjs(mouseEvents.drag[mouseEvents.drag.length - 1]);
       } else if (mouseEvents.rightClick.length > 0 && this.selectedObjs.length > 0) {
         var mouseGridPoint = mouseEvents.rightClick[mouseEvents.rightClick.length - 1];
+        var movePoint = {
+          x: mouseGridPoint.gameX,
+          y: mouseGridPoint.gameY
+        };
         for (var i = this.selectedObjs.length - 1; i >= 0; i--) {
-          this.selectedObjs[i].giveMoveCommand(mouseGridPoint, this);
+          this.selectedObjs[i].giveMoveCommand(movePoint, this);
         };
       } else if (mouseEvents.click.length > 0) {
         this.getGrid(mouseEvents.click[0]);
@@ -91,10 +95,10 @@ Game.prototype = {
 
       // draw the game objects
       callToNestedObject(this.gameObjects, 'draw', this.foregroundcontext);
-      if(this.refreshBackground){      
-        this.backgroundContext.drawImage(this.currentMapImage, this.offsetX, this.offsetY, 
-                                         this.foregroundCanvas.width, this.foregroundCanvas.height, 0, 0,
-                                         this.foregroundCanvas.width, this.foregroundCanvas.height);
+      if (this.refreshBackground) {
+        this.backgroundContext.drawImage(this.currentMapImage, this.offsetX, this.offsetY,
+          this.foregroundCanvas.width, this.foregroundCanvas.height, 0, 0,
+          this.foregroundCanvas.width, this.foregroundCanvas.height);
         this.refreshBackground = false;
       }
 
@@ -142,30 +146,30 @@ Game.prototype = {
       // this.mapGrid[y][x] = 1;      
   },
 
-  handlePanning: function(){
-    if(this.mouse.x<=this.panningThreshold){
-      if (this.offsetX>=this.panningSpeed){
+  handlePanning: function() {
+    if (this.mouse.x <= this.panningThreshold) {
+      if (this.offsetX >= this.panningSpeed) {
         this.refreshBackground = true;
-        this.offsetX -= this.panningSpeed;    
+        this.offsetX -= this.panningSpeed;
       }
-    } else if (this.mouse.x>= this.foregroundCanvas.width - this.panningThreshold){
-      if (this.offsetX + this.foregroundCanvas.width + this.panningSpeed <= this.currentMapImage.width){
+    } else if (this.mouse.x >= this.foregroundCanvas.width - this.panningThreshold) {
+      if (this.offsetX + this.foregroundCanvas.width + this.panningSpeed <= this.currentMapImage.width) {
         this.refreshBackground = true;
         this.offsetX += this.panningSpeed;
       }
     }
-  
-    if(this.mouse.y<=this.panningThreshold){
-      if (this.offsetY>=this.panningSpeed){
+
+    if (this.mouse.y <= this.panningThreshold) {
+      if (this.offsetY >= this.panningSpeed) {
         this.refreshBackground = true;
         this.offsetY -= this.panningSpeed;
       }
-    } else if (this.mouse.y>= this.foregroundCanvas.height - this.panningThreshold){
-      if (this.offsetY + this.foregroundCanvas.height + this.panningSpeed <= this.currentMapImage.height){
+    } else if (this.mouse.y >= this.foregroundCanvas.height - this.panningThreshold) {
+      if (this.offsetY + this.foregroundCanvas.height + this.panningSpeed <= this.currentMapImage.height) {
         this.refreshBackground = true;
         this.offsetY += this.panningSpeed;
       }
-    } 
+    }
   },
 
   getCenterOfGrid: function(gridSquare) {

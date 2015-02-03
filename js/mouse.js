@@ -21,17 +21,13 @@ function Mouse(game) {
 Mouse.prototype = {
   click: function(ev, rightClick) {
     this.dragSelect = false;
-    if (rightClick) {
-      this.addToQueue("rightClick", {
-        x: this.x,
-        y: this.y
-      })
-    } else {
-      this.addToQueue("click", {
-        x: this.x,
-        y: this.y
-      })
-    }
+    var clickType = rightClick ? "rightClick" : "click";
+    this.addToQueue(clickType, {
+      x: this.x,
+      y: this.y,
+      gameX: this.gameX,
+      gameY: this.gameY
+    })
   },
 
   mouseMove: function(ev) {
@@ -118,7 +114,7 @@ Mouse.prototype = {
       // console.
       var rectBox = this._getBox();
       context.strokeStyle = 'white';
-      context.strokeRect(rectBox.x-this.game.offsetX, rectBox.y - this.game.offsetY, rectBox.width, rectBox.height);
+      context.strokeRect(rectBox.x - this.game.offsetX, rectBox.y - this.game.offsetY, rectBox.width, rectBox.height);
     }
     context.strokeStyle = 'white';
     context.strokeRect(this.x, this.y, 5, 5);
@@ -149,7 +145,7 @@ Mouse.prototype = {
   // },
 
   calculateGameCoordinates: function(offsetX, offsetY) {
-     var gridSize = 20; // Grid size is just a way to get which tile you are on
+    var gridSize = 20; // Grid size is just a way to get which tile you are on
     this.gameX = this.x + offsetX;
     this.gameY = this.y + offsetY;
     // console.log(this);
