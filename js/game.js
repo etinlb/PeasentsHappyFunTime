@@ -124,11 +124,6 @@ Game.prototype = {
         selectedObjs.push(this.gameObjects['unit'][i])
       }
     };
-    // for (var i = this.gameObjects['building'].length - 1; i >= 0; i--) {
-    //   if(rect.containsPoint(this.gameObjects['building'][i].center())){
-    //     this.gameObjects['building'][i].color = "#FF00FF";
-    //   }
-    // };
     return selectedObjs;
   },
 
@@ -227,16 +222,18 @@ Game.prototype = {
     /**
      * Draw debug stuff.
      */
-    for (var y = 0; y < this.mapGrid.length; y++) {
-      for (var x = 0; x < this.mapGrid[y].length; x++) {
+    var offsetGrid = this.getGrid({x:this.offsetX, y:this.offsetY});
+
+    for (var y = offsetGrid[1]; y < this.mapGrid.length; y++) {
+      for (var x = offsetGrid[0]; x < this.mapGrid[y].length; x++) {
         this.backgroundContext.fillStyle = "#ffffff"
         if (this.mapGrid[y][x] == 1) {
-          this.backgroundContext.fillRect(x * this.gridSize, y * this.gridSize, this.gridSize, this.gridSize);
+          this.backgroundContext.fillRect(x * this.gridSize-this.offsetX, y * this.gridSize-this.offsetY, this.gridSize, this.gridSize);
         } else if (this.mapGrid[y][x] == 2) {
           this.backgroundContext.fillStyle = "#777777"
-          this.backgroundContext.fillRect(x * this.gridSize, y * this.gridSize, this.gridSize, this.gridSize);
+          this.backgroundContext.fillRect(x * this.gridSize- this.offsetX, y * this.gridSize- this.offsetY, this.gridSize, this.gridSize);
         } else {
-          this.backgroundContext.strokeRect(x * this.gridSize, y * this.gridSize, this.gridSize, this.gridSize);
+          this.backgroundContext.strokeRect(x * this.gridSize-this.offsetX, y * this.gridSize-this.offsetY, this.gridSize, this.gridSize);
         }
       }
     };
