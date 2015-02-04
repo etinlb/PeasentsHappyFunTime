@@ -14,6 +14,12 @@ function callToNestedObject(nestedObj, func, args) {
   }
 }
 
+function callOnArray(array, func, args){
+  for (var i = array.length - 1; i >= 0; i--) {
+    array[i][func].call(array[i], args); // I think there could be a better way to do this 
+  };  
+}
+
 function createEntity(properties, components) {
   var prop;
   var entity = {

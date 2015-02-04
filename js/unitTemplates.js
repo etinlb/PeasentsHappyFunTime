@@ -7,13 +7,14 @@ function AttackUnit(game) {
   this.properties = {
     type: "AttackUnit",
     hp: 10
-  }
+  };
   this.components = [
       new Damageable(),
       new Rect(220, 500, 20, 20),
       new Unit(),
-      new Attacker()
-    ]
+      new Attacker(),
+      new Selectable()
+    ];
   // If there is a naming conflict in properties, set which to use here
   // this.overRide = {
   //   "update": "Attacker"
@@ -27,6 +28,11 @@ function AttackUnit(game) {
 AttackUnit.prototype = {
   update: function(){
     this.overload.update.Attacker(); // calls update for attacker
+  draw: function(context){
+    if(this.selected){
+      this.overload.draw.Selectable(context);
+    }
+    this.overload.draw.Unit(context);
   }
 }
 

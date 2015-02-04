@@ -34,7 +34,8 @@ function Game() {
   this.height = this.currentMapImage.height;
 
   this.gameObjects = {};
-  this.actionQueue = []
+  this.actionQueue = [];
+  this.selectedObjs = [];
     // console.log(this.mouse);
 };
 
@@ -110,17 +111,23 @@ Game.prototype = {
     }
   },
 
+  clearSelected: function(){
+    callOnArray(this.selectedObjs, 'unselect');
+    // this.selectObjs = [];
+  },
+
   selectObjs: function(selectArea) {
     /**
      * Select any game objects in the selected area. Uses the center of the
      * unit to determine in in the selected area.
      */
     // make a rect to use the contains point function
+    this.clearSelected();
     var rect = new Rect(selectArea.x, selectArea.y, selectArea.width, selectArea.height);
     var selectedObjs = [];
     for (var i = this.gameObjects['unit'].length - 1; i >= 0; i--) {
-      if (rect.containsPoint(this.gameObjects['unit'][i].center())) {
-        this.gameObjects['unit'][i].color = "#FF00FF";
+      if (this.gameObjects['unit'][i].selectable && rect.containsPoint(this.gameObjects['unit'][i].center())) {
+        this.gameObjects['unit'][i].select();
         selectedObjs.push(this.gameObjects['unit'][i])
       }
     };
@@ -128,9 +135,13 @@ Game.prototype = {
   },
 
   play: function() {
+    /**
+     * A bit misleading, simply starts the game and draw loop.
+     */
     this.gameLoop();
     this.drawLoop();
   },
+
   getGrid: function(point) {
     /**
      * get the grid square of the point
@@ -138,7 +149,6 @@ Game.prototype = {
     var x = Math.floor(point.x / this.gridSize);
     var y = Math.floor(point.y / this.gridSize);
     return [x, y]
-      // this.mapGrid[y][x] = 1;      
   },
 
   handlePanning: function() {
@@ -206,23 +216,18 @@ Game.prototype = {
         addOne--;
       }
     }
-    // var path = AStar(this.mapGrid, this.getGrid(entity1.center()), [35, 0], 'Euclidean');
-    // for (var i = 0; i < path.length; i++) {
-    //   this.mapGrid[path[i].y][path[i].x] = 2;
-    // };
-    // var building = new Unit(300, 300, 200, 200);
-    // building.color = "#000077";
     this.gameObjects['unit'] = [entity1, entity3]; // entity2];
     this.gameObjects['building'] = [entity2];
-    console.log(this.gameObjects)
-      // console.log(rect.center());
   },
 
   debugDraw: function() {
     /**
      * Draw debug stuff.
      */
-    var offsetGrid = this.getGrid({x:this.offsetX, y:this.offsetY});
+    var offsetGrid = this.getGrid({
+      x: this.offsetX,
+      y: this.offsetY
+    });
 
     for (var y = offsetGrid[1]; y < this.mapGrid.length; y++) {
       for (var x = offsetGrid[0]; x < this.mapGrid[y].length; x++) {

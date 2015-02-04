@@ -5,9 +5,12 @@
  * the creation in unitTemplates
  */
 function Unit() {
-  this.color = "#FF0000";
+  /**
+   * base unit, not used for a whole lot
+   * @type {String}
+   */
+  this.color = "#00FF00";
   this.type = "Unit";
-  // this.rect = new Rect(x, y, width, height);
 }
 
 Unit.prototype = {
@@ -18,13 +21,9 @@ Unit.prototype = {
   },
 
   draw: function(context) {
-    // console.log("drawing this ");
-    // console.log(this);
     context.fillStyle = this.color;
-    // var x = (this.x*this.game.gridSize)-this.game.offsetX-this.pixelOffsetX;
-    // var y = (this.y*this.game.gridSize)-this.game.offsetY-this.pixelOffsetY;
-    var x = (this.x)-this.game.offsetX;
-    var y = (this.y)-this.game.offsetY;
+    var x = (this.x) - this.game.offsetX;
+    var y = (this.y) - this.game.offsetY;
     this.drawingX = x;
     this.drawingY = y;
 
@@ -37,10 +36,36 @@ Unit.prototype = {
 }
 
 function Selectable() {
+  /**
+   * Give to a unit to be "selectable" or orderable, i.e anything the player controls. Changes
+   * the game menu to what ever orders you can give it? I'm not to sure
+   * EX: Buildings and units.
+   */
   this.type = "Selectable";
+  this.selectable = true;
+  this.selectColor = "#ff0000";
+  this.selectWidth = 5;
 }
 Selectable.prototype = {
+  select: function(){
+    // this.unSelectColor = this.color;  // use color from unit to set as th unselectedColor
+    this.selected = true;
+  },
 
+  unselect: function(){
+    this.selected = false;
+  },
+
+  draw: function(context){
+    context.strokeStyle = this.selectColor;
+    var contextLineWidth = context.lineWidth; // significantly faster than saving the entire context.
+    context.lineWidth = this.selectWidth;
+    var x = (this.x) - this.game.offsetX;// - this.selectWidth;  // 
+    var y = (this.y) - this.game.offsetY;// - this.selectWidth;
+    // context.strokeRect(x, y, this.width+this.selectWidth*2, this.height+this.selectWidth*2);
+    context.strokeRect(x, y, this.width, this.height);
+    context.lineWidth = contextLineWidth;
+  },
 }
 
 function Damageable() {
