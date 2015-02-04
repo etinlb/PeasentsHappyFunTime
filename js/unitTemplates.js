@@ -13,13 +13,14 @@ function AttackUnit(game) {
       new Rect(220, 500, 20, 20),
       new Unit(),
       new Attacker(),
+      new Movable(this.game.gameGrid, this.game.gridSize),
       new Selectable()
     ];
   // If there is a naming conflict in properties, set which to use here
   // this.overRide = {
   //   "update": "Attacker"
   // }
-  this.overload = {"update":{}};       // list of functions or properties that exist in multiple components
+  this.overload = {"update":{}, "draw":{}};       // list of functions or properties that exist in multiple components
                                        // that will be kept and keyed to the name of the component. Y
   createEntityFromTemplate(this);   // utility.js
   this.components = [];
@@ -27,7 +28,13 @@ function AttackUnit(game) {
 }
 AttackUnit.prototype = {
   update: function(){
-    this.overload.update.Attacker(); // calls update for attacker
+    if(this.engaged){
+      // if engaged, set the move point to the the engaged unit
+      this.moveTo(this.engaged.center());    
+    }
+    // this.overload.update.Movable(); // calls update for movable
+    this.overload.update.Movable(); // 
+  },
   draw: function(context){
     if(this.selected){
       this.overload.draw.Selectable(context);

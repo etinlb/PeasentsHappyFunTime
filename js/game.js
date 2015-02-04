@@ -27,8 +27,8 @@ function Game() {
   this.panningThreshold = 60; // Distance from edge of canvas at which panning starts
   this.panningSpeed = 10; // 
   this.running = true;
-  this.mapGrid = [];
-  console.log(this.mapGrid);
+  this.gameGrid = [];
+  console.log(this.gameGrid);
   this.currentMapImage = this.loader.loadImage("images/maps/level-one.png");
   this.width = this.currentMapImage.width;
   this.height = this.currentMapImage.height;
@@ -65,25 +65,9 @@ Game.prototype = {
     if (this.mouse.eventFlag) {
       var mouseEvents = this.mouse.getMouseInfo();
       console.log(mouseEvents);
-      if (mouseEvents.drag.length > 0) {
-        // should only need the last drag event
-        this.selectedObjs = this.selectObjs(mouseEvents.drag[mouseEvents.drag.length - 1]);
-      } else if (mouseEvents.rightClick.length > 0 && this.selectedObjs.length > 0) {
-        var mouseGridPoint = mouseEvents.rightClick[mouseEvents.rightClick.length - 1];
-        var movePoint = {
-          x: mouseGridPoint.gameX,
-          y: mouseGridPoint.gameY
-        };
-        for (var i = this.selectedObjs.length - 1; i >= 0; i--) {
-          this.selectedObjs[i].giveMoveCommand(movePoint, this);
-        };
-      } else if (mouseEvents.click.length > 0) {
-        this.getGrid(mouseEvents.click[0]);
-
-      }
+      this.handleMouseEvents(mouseEvents);
     }
-    callToNestedObject(this.gameObjects, 'update', this.foregroundcontext);
-    // return;
+    callToNestedObject(this.gameObjects, 'update');  //, this.foregroundcontext);
     window.requestAnimationFrame(this.gameLoop); //.bind(this));  
     return;
   },
@@ -97,9 +81,8 @@ Game.prototype = {
       // draw the game objects
       callToNestedObject(this.gameObjects, 'draw', this.foregroundcontext);
       if (this.refreshBackground) {
-        this.backgroundContext.drawImage(this.currentMapImage, this.offsetX, this.offsetY,
-          this.foregroundCanvas.width, this.foregroundCanvas.height, 0, 0,
-          this.foregroundCanvas.width, this.foregroundCanvas.height);
+        this.backgroundContext.drawImage(this.currentMapImage, this.offsetX, this.offsetY, this.foregroundCanvas.width,
+          this.foregroundCanvas.height, 0, 0, this.foregroundCanvas.width, this.foregroundCanvas.height);
         this.refreshBackground = false;
       }
 
@@ -108,6 +91,27 @@ Game.prototype = {
       }
       this.mouse.draw(this.foregroundcontext);
       window.requestAnimationFrame(this.drawLoop); //.bind(this));  
+    }
+  },
+
+  handleMouseEvents: function(mouseEvents){
+    if (mouseEvents.drag.length > 0) {
+      // should only need the last drag event
+      this.selectedObjs = this.selectObjs(mouseEvents.drag[mouseEvents.drag.length - 1]);
+    } else if (mouseEvents.rightClick.length > 0 && this.selectedObjs.length > 0) {
+      var mouseGridPoint = mouseEvents.rightClick[mouseEvents.rightClick.length - 1];
+      var movePoint = {
+        x: mouseGridPoint.gameX,
+        y: mouseGridPoint.gameY
+      };
+      for (var i = this.selectedObjs.length - 1; i >= 0; i--) {
+        this.selectedObjs[i].moveTo(movePoint);
+      };
+    } else if (mouseEvents.click.length > 0) {
+      if(this.selectedObjs.length > 0){
+        this.clearSelected();  
+      }
+      this.getGrid(mouseEvents.click[0]);
     }
   },
 
@@ -196,23 +200,20 @@ Game.prototype = {
     //  [new Damageable(), new Rect(20, 20, 20, 20), new Unit(), new Attacker()]);
     var entity2 = new Building(this);
     var entity1 = new AttackUnit(this);
+    // entity1.engageSpecific(entity2);
     var entity3 = new AttackUnit(this);
     entity3.x = entity1.x + 100;
-    console.log(entity2);
-    console.log(entity1);
-    // entity1.engageSpecific(entity2);
-    // this.mapGrid[25][22] = 0;
+
     var addOne;
     for (var y = 0; y < this.height / this.gridSize; y++) {
-      this.mapGrid[y] = [];
+      this.gameGrid[y] = [];
       for (var x = 0; x < this.width / this.gridSize; x++) {
         addOne = _.random(0, 100);
         if (addOne > 90) {
-          this.mapGrid[y][x] = 1;
+          this.gameGrid[y][x] = 1;
         } else {
-          this.mapGrid[y][x] = 0;
+          this.gameGrid[y][x] = 0;
         }
-        // this.mapGrid[y][x] = 0;
         addOne--;
       }
     }
@@ -229,22 +230,23 @@ Game.prototype = {
       y: this.offsetY
     });
 
-    for (var y = offsetGrid[1]; y < this.mapGrid.length; y++) {
-      for (var x = offsetGrid[0]; x < this.mapGrid[y].length; x++) {
+    for (var y = offsetGrid[1]; y < this.gameGrid.length; y++) {
+      for (var x = offsetGrid[0]; x < this.gameGrid[y].length; x++) {
         this.backgroundContext.fillStyle = "#ffffff"
-        if (this.mapGrid[y][x] == 1) {
-          this.backgroundContext.fillRect(x * this.gridSize-this.offsetX, y * this.gridSize-this.offsetY, this.gridSize, this.gridSize);
-        } else if (this.mapGrid[y][x] == 2) {
+        if (this.gameGrid[y][x] == 1) {
+          this.backgroundContext.fillRect(x * this.gridSize - this.offsetX, y * this.gridSize - this.offsetY, this.gridSize,
+            this.gridSize);
+        } else if (this.gameGrid[y][x] == 2) {
           this.backgroundContext.fillStyle = "#777777"
-          this.backgroundContext.fillRect(x * this.gridSize- this.offsetX, y * this.gridSize- this.offsetY, this.gridSize, this.gridSize);
+          this.backgroundContext.fillRect(x * this.gridSize - this.offsetX, y * this.gridSize - this.offsetY, this.gridSize,
+            this.gridSize);
         } else {
-          this.backgroundContext.strokeRect(x * this.gridSize-this.offsetX, y * this.gridSize-this.offsetY, this.gridSize, this.gridSize);
+          this.backgroundContext.strokeRect(x * this.gridSize - this.offsetX, y * this.gridSize - this.offsetY,
+            this.gridSize, this.gridSize);
         }
       }
     };
 
   }
-
-
-
 };
+

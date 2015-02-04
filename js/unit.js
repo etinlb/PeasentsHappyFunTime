@@ -35,6 +35,7 @@ Unit.prototype = {
   }
 }
 
+// TODO: Evaluate if this is needed
 function Selectable() {
   /**
    * Give to a unit to be "selectable" or orderable, i.e anything the player controls. Changes
@@ -46,6 +47,7 @@ function Selectable() {
   this.selectColor = "#ff0000";
   this.selectWidth = 5;
 }
+
 Selectable.prototype = {
   select: function(){
     // this.unSelectColor = this.color;  // use color from unit to set as th unselectedColor
@@ -69,6 +71,11 @@ Selectable.prototype = {
 }
 
 function Damageable() {
+  /**
+   * Any unit that is able to be damaged.
+   * @param  {[type]} amount [description]
+   * @return {[type]}        [description]
+   */
   this.type = "Damageable";
 }
 
@@ -78,11 +85,127 @@ Damageable.prototype = {
   }
 }
 
+
+function Movable(gameGrid, gridSize) {
+  /**
+   * Moveable unit. Utilizes A* to determine path.
+   */
+  this.type = "Movable";  
+  this.movingTo = false;
+  this.gameGrid = gameGrid; // pointer to the game grid
+  this.gridSize = gridSize;
+}
+
+Movable.prototype = {
+  doPath: function() {
+    console.log("doing path");
+    var start = this.getGrid(this.center());
+    var end = this.getGrid(this.movingTo);
+    var path = AStar(this.gameGrid, start, end, 'Euclidean');
+    if (path.length > 1) {
+      var nextStep = {
+        x: path[1].x,
+        y: path[1].y
+      }; // next step in GRID space
+      moveTowardsInGrid(this, nextStep, this.game);
+      // newDirection = findAngle(nextStep,this,this.directions);    
+    } else if (start[0] == end[0] && start[1] == end[1]) {
+      // Reached destination grid;
+      // path = [this,destination];               
+      // newDirection = findAngle(destination,this,this.directions);
+      return false;
+    } else {
+      // There is no path
+      return false;
+    }
+    return true;
+  },
+
+  getGrid: function(point){
+    /**
+     * Gets the current point the unit in grid space.
+     */
+    var x = Math.floor(point.x / this.gridSize);
+    var y = Math.floor(point.y / this.gridSize);
+    return [x, y];    
+  },
+
+  getCenterOfGrid: function(gridSquare) {
+    /**
+     * Given a grid point, gets the center in game space.
+     */
+    var rect = {
+      x: gridSquare.x * this.gridSize + this.gridSize / 2, // get the center,
+      y: gridSquare.y * this.gridSize + this.gridSize / 2 // get the center
+    }
+    // rect.x = 
+    // rect.y = 
+    return rect;
+  },
+
+
+  moveTo: function(point){
+    /**
+     * Point to move to in pixel space
+     */
+    this.movingTo = point;
+  },
+
+  moveTowards: function(target) {
+    var y = target.y - this.centery();
+    var x = target.x - this.centerx();
+    var distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    var speed = 3;
+    var fullCircle = Math.PI * 2;
+
+    // what's the different between our orientation and the angle we want to face in order to move directly at our target
+    var angle = Math.atan2(y, x);
+    var delta = angle - this.orientation;
+    var delta_abs = Math.abs(delta);
+
+    // if the different is more than 180°, convert the angle a corresponding negative value
+    if (delta_abs > Math.PI) {
+      delta = delta_abs - fullCircle;
+    }
+    var turnSpeed = 10000;
+    // if the angle is already correct, don't bother adjusting
+    if (delta !== 0) {
+      // do we turn left or right?
+      var direction = delta / delta_abs;
+      // update our orientation
+      this.orientation += (direction * Math.min(turnSpeed, delta_abs));
+    }
+    // constrain orientation to reasonable bounds
+    this.orientation %= fullCircle;
+
+    // use orientation and speed to update our position
+    this.x += Math.cos(this.orientation) * speed;
+    this.y += Math.sin(this.orientation) * speed;
+  },
+
+  update: function() {
+    // if (this.engaged) {
+    //   this.moveTowardsEngaged();
+    //   this.attack();
+    //   console.log(this.collideRect(this.engaged));
+    // } else 
+    if (this.movingTo) {
+      if (!this.doPath()) {
+        this.movingTo = false;
+      }
+    }
+  },
+
+};
+
+
 function Attacker() {
+  /**
+   * Attacking unit. Determines if they are close enough to attack  and engages units
+   */
   this.delay = 10; // number of frames to wait until able to attack again
   this.attackDistance = 20;
   this.safeDistance = 10; // distance to keep from the 
-  this.movingTo = false;
   this.type = "Attacker";
 }
 
@@ -110,20 +233,6 @@ Attacker.prototype = {
     this.engaged = entity;
   },
 
-  moveTowardsEngaged: function() {
-    if (distance(this, this.engaged) > this.safeDistance)
-      moveTowards(this, this.engaged);
-  },
-  giveMoveCommand: function(point, game) {
-    /**
-     * informs the unit it needs to move to the point passed in
-     * TODO: Hack adding game since I need some functions that are in the game
-     * object that need to go somewhere else
-     */
-    this.movingTo = point;
-    this.game = game;
-  },
-
   attack: function() {
     if (distance(this, this.engaged) < this.attackDistance &&
       this.attackTimer == this.delay) {
@@ -135,41 +244,6 @@ Attacker.prototype = {
       this.attackTimer++;
     }
   },
-
-  update: function() {
-    if (this.engaged) {
-      this.moveTowardsEngaged();
-      this.attack();
-      console.log(this.collideRect(this.engaged));
-    } else if (this.movingTo) {
-      if(!this.doPath()){
-        this.movingTo = false;
-      }
-    }
-  },
-
-  doPath: function(){
-    console.log("doing path");
-    var start = this.game.getGrid(this.center());
-    var end = this.game.getGrid(this.movingTo);
-    var path = AStar(this.game.mapGrid, start, end, 'Euclidean');
-    if (path.length>1){
-      var nextStep = {x:path[1].x,y:path[1].y};  // next step in GRID space
-      moveTowardsInGrid(this, nextStep, this.game);
-      // newDirection = findAngle(nextStep,this,this.directions);    
-    } else if(start[0]==end[0] && start[1] == end[1]){ 
-      // Reached destination grid;
-      // path = [this,destination];               
-      // newDirection = findAngle(destination,this,this.directions);
-      return false;
-    } else { 
-      // There is no path
-      return false;
-    }
-
-    return true;
-
-  },
 }
 
 
@@ -178,17 +252,17 @@ function distance(point1, point2) {
   var xs = 0;
   var ys = 0;
   // go duck typing go!
-  try{
+  try {
     xs = point2.centerx() - point1.centerx();
-  } catch(err){
+  } catch (err) {
     // I like to use centerx but not always an option, use x instead
     xs = point2.x - point1.x;
   }
   xs = xs * xs;
 
-  try{
+  try {
     ys = point2.centery() - point1.centery();
-  } catch(err){
+  } catch (err) {
     // I like to use centerx but not always an option, use x instead
     ys = point2.y - point1.y;
   }
@@ -196,7 +270,8 @@ function distance(point1, point2) {
 
   return Math.sqrt(xs + ys);
 }
-function moveTowardsInGrid(obj, target, game){
+
+function moveTowardsInGrid(obj, target, game) {
   // var start = game.getCenterOfGrid(obj);
   var end = game.getCenterOfGrid(target);
   moveTowards(obj, end);
@@ -237,3 +312,4 @@ function moveTowards(obj, target) {
   obj.x += Math.cos(obj.orientation) * speed;
   obj.y += Math.sin(obj.orientation) * speed;
 }
+

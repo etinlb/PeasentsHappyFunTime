@@ -61,3 +61,11 @@ function createEntityFromTemplate(templateObj) {
   });
   return templateObj;
 }
+
+Engine = function(game){
+  /**
+   * Various engine type interactions
+   * @type {[type]}
+   */
+  this.game = game; 
+}
