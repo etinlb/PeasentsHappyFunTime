@@ -2,8 +2,8 @@
 var GRIDFACTOR = 0.5,
     SPEEDADJUSTMENTFACTOR = 1 / 64,
     TURNADJUSTMENTFACTOR = 1 / 8,
-    HARDCOLLISIONFORCE = 4,
-    SOFTCOLLISIONFORCE = 2; // add to the x and y to get the middle of the grid
+    HARDCOLLISIONFORCE = 2,
+    SOFTCOLLISIONFORCE = 1; // add to the x and y to get the middle of the grid
 
 
 $(window).load(function() {
@@ -23,7 +23,6 @@ var settings = {
 function Game() {
   this.loader = new Loader('#loadingscreen')
   this.mouse = new Mouse(this);
-  // this.menu = new Menu();s
   // The map is broken into square tiles of this size (20 pixels x 20 pixels)
   this.gridSize = 20;
   // Store whether or not the background moved and needs to be redrawn
@@ -219,18 +218,14 @@ Game.prototype = {
         // }
       }
     }
-    var walls = {x:12, y:12, width:10, height:10}
-    for (var y = walls.y; y < walls.y+walls.height; y++) {
-      for (var x = walls.x; x < walls.x + walls.width; x++) {
-        this.gameGrid[y][x] = 1;
-        // addOne = _.random(0, 100);
-        // if (addOne > 90) {
-        //   this.gameGrid[y][x] = 1;
-        // } else {
-        //   this.gameGrid[y][x] = 0;
-        // }
+    var walls = [{x:12, y:12, width:10, height:1}, {x:24, y:12, width:20, height:4}]
+    for (var i = walls.length - 1; i >= 0; i--) {
+      for (var y = walls[i].y; y < walls[i].y+walls[i].height; y++) {
+        for (var x = walls[i].x; x < walls[i].x + walls[i].width; x++) {
+          this.gameGrid[y][x] = 1;
+        }
       }
-    }
+    };
 
 
 

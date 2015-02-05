@@ -103,7 +103,7 @@ function Movable(gameGrid, gridSize) {
   this.gridSize = gridSize;
   this.directions = 8;
   this.direction = 0;
-  this.turnSpeed = 4;
+  this.turnSpeed = 7;
   this.speed = 10;
   this.mapGridHeight = gameGrid.length;
   this.mapGridWidth = gameGrid[0].length;
@@ -174,6 +174,7 @@ Movable.prototype = {
     console.log("doing path");
     var start = [Math.floor(this.x), Math.floor(this.y)];
     var end = this.getGrid(this.movingTo);
+    var destination = {x:end[0], y:end[1]}
     var path = AStar(this.gameGrid, start, end, 'Euclidean');
 
     var newDirection;
@@ -185,8 +186,8 @@ Movable.prototype = {
       newDirection = findAngle(nextStep, this, this.directions);  
     } else if (start[0] == end[0] && start[1] == end[1]) {
       // Reached destination grid;
-      //path = [this,end];               
-      //newDirection = findAngle(end,this,this.directions);
+      //path = [this,destination];               
+      //newDirection = findAngle(destination,this,this.directions);
       return false;
     } else {
       // There is no path
