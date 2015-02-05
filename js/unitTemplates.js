@@ -10,7 +10,7 @@ function AttackUnit(game) {
   };
   this.components = [
       new Damageable(),
-      new Rect(220, 500, 20, 20),
+      new Rect(10, 10, 40, 40),
       new Unit(),
       new Attacker(),
       new Movable(this.game.gameGrid, this.game.gridSize),
@@ -36,10 +36,10 @@ AttackUnit.prototype = {
     this.overload.update.Movable(); // 
   },
   draw: function(context){
+    this.overload.draw.Unit(context);
     if(this.selected){
       this.overload.draw.Selectable(context);
     }
-    this.overload.draw.Unit(context);
   }
 }
 

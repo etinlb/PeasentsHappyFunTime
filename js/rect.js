@@ -1,8 +1,9 @@
-// Primitive rect object. Trying to emulate pygame rect as I like it
+// Primitive rect object. Trying to emulate pygame rect as I like it. Fucked that up though, now x and y are in grid space.
 function Rect(x, y, width, height) {
   this.x = x;
   this.y = y;
   this.width = width;
+  this.radius = this.width / 2;
   this.height = height;
   this.orientation = 0;
 }

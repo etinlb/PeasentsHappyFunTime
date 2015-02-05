@@ -1,3 +1,11 @@
+// Some global settings
+var GRIDFACTOR = 0.5,
+    SPEEDADJUSTMENTFACTOR = 1 / 64,
+    TURNADJUSTMENTFACTOR = 1 / 8,
+    HARDCOLLISIONFORCE = 4,
+    SOFTCOLLISIONFORCE = 2; // add to the x and y to get the middle of the grid
+
+
 $(window).load(function() {
   this.game = new Game();
   game.init();
@@ -130,7 +138,7 @@ Game.prototype = {
     var rect = new Rect(selectArea.x, selectArea.y, selectArea.width, selectArea.height);
     var selectedObjs = [];
     for (var i = this.gameObjects['unit'].length - 1; i >= 0; i--) {
-      if (this.gameObjects['unit'][i].selectable && rect.containsPoint(this.gameObjects['unit'][i].center())) {
+      if (this.gameObjects['unit'][i].selectable && rect.containsPoint(this.gameObjects['unit'][i].getPixelSpace())) {
         this.gameObjects['unit'][i].select();
         selectedObjs.push(this.gameObjects['unit'][i])
       }
@@ -198,25 +206,41 @@ Game.prototype = {
   debugInit: function() {
     // var entity1 = this.createEntity({hp:10}, 
     //  [new Damageable(), new Rect(20, 20, 20, 20), new Unit(), new Attacker()]);
-    var entity2 = new Building(this);
-    var entity1 = new AttackUnit(this);
-    // entity1.engageSpecific(entity2);
-    var entity3 = new AttackUnit(this);
-    entity3.x = entity1.x + 100;
-
     var addOne;
     for (var y = 0; y < this.height / this.gridSize; y++) {
       this.gameGrid[y] = [];
       for (var x = 0; x < this.width / this.gridSize; x++) {
-        addOne = _.random(0, 100);
-        if (addOne > 90) {
-          this.gameGrid[y][x] = 1;
-        } else {
-          this.gameGrid[y][x] = 0;
-        }
-        addOne--;
+        this.gameGrid[y][x] = 0;
+        // addOne = _.random(0, 100);
+        // if (addOne > 90) {
+        //   this.gameGrid[y][x] = 1;
+        // } else {
+        //   this.gameGrid[y][x] = 0;
+        // }
       }
     }
+    var walls = {x:12, y:12, width:10, height:10}
+    for (var y = walls.y; y < walls.y+walls.height; y++) {
+      for (var x = walls.x; x < walls.x + walls.width; x++) {
+        this.gameGrid[y][x] = 1;
+        // addOne = _.random(0, 100);
+        // if (addOne > 90) {
+        //   this.gameGrid[y][x] = 1;
+        // } else {
+        //   this.gameGrid[y][x] = 0;
+        // }
+      }
+    }
+
+
+
+    //
+    var entity2 = new Building(this);
+    var entity1 = new AttackUnit(this);
+    // entity1.engageSpecific(entity2);
+    var entity3 = new AttackUnit(this);
+    entity3.x = entity1.x + 10;
+
     this.gameObjects['unit'] = [entity1, entity3]; // entity2];
     this.gameObjects['building'] = [entity2];
   },

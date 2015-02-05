@@ -12,7 +12,7 @@ function Unit() {
   this.color = "#00FF00";
   this.type = "Unit";
 }
-
+var gridSize = 20;
 Unit.prototype = {
 
   click: function(ev, rightClick) {
@@ -22,8 +22,8 @@ Unit.prototype = {
 
   draw: function(context) {
     context.fillStyle = this.color;
-    var x = (this.x) - this.game.offsetX;
-    var y = (this.y) - this.game.offsetY;
+    var x = (this.x * gridSize) - this.game.offsetX + gridSize * -1;
+    var y = (this.y * gridSize) - this.game.offsetY + gridSize * -1;
     this.drawingX = x;
     this.drawingY = y;
 
@@ -32,6 +32,13 @@ Unit.prototype = {
 
   update: function() {
 
+  },
+  getPixelSpace: function() {
+    var rect = {
+      x: this.x * gridSize - this.game.offsetX,
+      y: this.y * gridSize - this.game.offsetY
+    }
+    return rect;
   }
 }
 
@@ -45,25 +52,25 @@ function Selectable() {
   this.type = "Selectable";
   this.selectable = true;
   this.selectColor = "#ff0000";
-  this.selectWidth = 5;
+  this.selectWidth = 2;
 }
 
 Selectable.prototype = {
-  select: function(){
+  select: function() {
     // this.unSelectColor = this.color;  // use color from unit to set as th unselectedColor
     this.selected = true;
   },
 
-  unselect: function(){
+  unselect: function() {
     this.selected = false;
   },
 
-  draw: function(context){
+  draw: function(context) {
     context.strokeStyle = this.selectColor;
     var contextLineWidth = context.lineWidth; // significantly faster than saving the entire context.
     context.lineWidth = this.selectWidth;
-    var x = (this.x) - this.game.offsetX;// - this.selectWidth;  // 
-    var y = (this.y) - this.game.offsetY;// - this.selectWidth;
+    var x = (this.drawingX);// - this.game.offsetX; // - this.selectWidth;  // 
+    var y = (this.drawingY);// - this.game.offsetY; // - this.selectWidth;
     // context.strokeRect(x, y, this.width+this.selectWidth*2, this.height+this.selectWidth*2);
     context.strokeRect(x, y, this.width, this.height);
     context.lineWidth = contextLineWidth;
@@ -90,44 +97,179 @@ function Movable(gameGrid, gridSize) {
   /**
    * Moveable unit. Utilizes A* to determine path.
    */
-  this.type = "Movable";  
+  this.type = "Movable";
   this.movingTo = false;
   this.gameGrid = gameGrid; // pointer to the game grid
   this.gridSize = gridSize;
+  this.directions = 8;
+  this.direction = 0;
+  this.turnSpeed = 4;
+  this.speed = 10;
+  this.mapGridHeight = gameGrid.length;
+  this.mapGridWidth = gameGrid[0].length;
 }
 
 Movable.prototype = {
+  checkCollisionObjects: function(grid) {
+    // Calculate new position on present path
+    var movement = this.speed * SPEEDADJUSTMENTFACTOR; //*game.speedAdjustmentFactor;
+    var angleRadians = -(Math.round(this.direction) / this.directions) * 2 * Math.PI;
+    // var grid = this.getGrid(this);
+    var newX = this.x - (movement * Math.sin(angleRadians));
+    var newY = this.y - (movement * Math.cos(angleRadians));
+
+    // List of objects that will collide after next movement step
+    var collisionObjects = [];
+
+    // Test grid upto 3 squares away      
+    var x1 = Math.max(0, Math.floor(newX) - 3);
+    var x2 = Math.min(this.mapGridWidth - 1, Math.floor(newX) + 3);
+
+    var y1 = Math.max(0, Math.floor(newY) - 3);
+    var y2 = Math.min(this.mapGridHeight - 1, Math.floor(newY) + 3);
+
+    for (var j = x1; j <= x2; j++) {
+      for (var i = y1; i <= y2; i++) {
+        if (grid[i][j] == 1) {
+          if (Math.pow(j + GRIDFACTOR - newX, 2) + Math.pow(i + GRIDFACTOR - newY, 2) < Math.pow(this.radius / this.gridSize +
+              0.1, 2)) {
+            collisionObjects.push({
+              collisionType: "hard",
+              with: {
+                type: "wall",
+                x: j + GRIDFACTOR,
+                y: i + GRIDFACTOR
+              }
+            });
+          } else if (Math.pow(j + GRIDFACTOR - newX, 2) + Math.pow(i + GRIDFACTOR - newY, 2) < Math.pow(this.radius / this.gridSize +
+              0.7, 2)) {
+            collisionObjects.push({
+              collisionType: "soft",
+              with: {
+                type: "wall",
+                x: j + GRIDFACTOR,
+                y: i + GRIDFACTOR
+              }
+            });
+          }
+        }
+      };
+    };
+
+    // // Test vehicles that are less than 3 squares away for collisions
+    // for (var i = game.vehicles.length - 1; i >= 0; i--){
+    //   var vehicle = game.vehicles[i];
+    //   if (vehicle != this && Math.abs(vehicle.x-this.x)<3 && Math.abs(vehicle.y-this.y)<3){ 
+    //     if (Math.pow(vehicle.x-newX,2) + Math.pow(vehicle.y-newY,2) < Math.pow((this.radius+vehicle.radius)/game.gridSize,2)){
+    //             collisionObjects.push({collisionType:"hard",with:vehicle});
+    //            } else if (Math.pow(vehicle.x-newX,2) + Math.pow(vehicle.y-newY,2) < Math.pow((this.radius*1.5+vehicle.radius)/game.gridSize,2)){
+    //       collisionObjects.push({collisionType:"soft",with:vehicle});
+    //            }
+    //   }
+    // };
+
+    return collisionObjects;
+  },
   doPath: function() {
     console.log("doing path");
-    var start = this.getGrid(this.center());
+    var start = [Math.floor(this.x), Math.floor(this.y)];
     var end = this.getGrid(this.movingTo);
     var path = AStar(this.gameGrid, start, end, 'Euclidean');
+
+    var newDirection;
     if (path.length > 1) {
       var nextStep = {
-        x: path[1].x,
-        y: path[1].y
-      }; // next step in GRID space
-      moveTowardsInGrid(this, nextStep, this.game);
-      // newDirection = findAngle(nextStep,this,this.directions);    
+        x: path[1].x + GRIDFACTOR,
+        y: path[1].y + GRIDFACTOR
+      };
+      newDirection = findAngle(nextStep, this, this.directions);  
     } else if (start[0] == end[0] && start[1] == end[1]) {
       // Reached destination grid;
-      // path = [this,destination];               
-      // newDirection = findAngle(destination,this,this.directions);
+      //path = [this,end];               
+      //newDirection = findAngle(end,this,this.directions);
       return false;
     } else {
       // There is no path
       return false;
     }
+    var collisionObjects = this.checkCollisionObjects(this.gameGrid);
+    if (collisionObjects.length > 0) {
+      this.colliding = true;
+      this.hardCollision = false;
+
+      // Create a force vector object that adds up repulsion from all colliding objects
+      var forceVector = {
+          x: 0,
+          y: 0
+        }
+        // By default, the next step has a mild attraction force
+      collisionObjects.push({
+        collisionType: "attraction",
+        with: {
+          x: path[1].x + GRIDFACTOR,
+          y: path[1].y + GRIDFACTOR
+        }
+      });
+      for (var i = collisionObjects.length - 1; i >= 0; i--) {
+        var collObject = collisionObjects[i];
+        var objectAngle = findAngle(collObject.with, this, this.directions);
+        var objectAngleRadians = -(objectAngle / this.directions) * 2 * Math.PI;
+        var forceMagnitude;
+        switch (collObject.collisionType) {
+          case "hard":
+            forceMagnitude = HARDCOLLISIONFORCE;
+            this.hardCollision = true;
+            break;
+          case "soft":
+            forceMagnitude = SOFTCOLLISIONFORCE;
+            break;
+          case "attraction":
+            forceMagnitude = -0.25;
+            break;
+        }
+
+        forceVector.x += (forceMagnitude * Math.sin(objectAngleRadians));
+        forceVector.y += (forceMagnitude * Math.cos(objectAngleRadians));
+      };
+      // Find a new direction based on the force vector
+
+      newDirection = findAngle(forceVector, {
+        x: 0,
+        y: 0
+      }, this.directions);
+    } else {
+      this.colliding = false;
+    }
+    // Calculate turn amount for new direction 
+    var difference = angleDiff(this.direction, newDirection, this.directions);
+    var turnAmount = this.turnSpeed * TURNADJUSTMENTFACTOR; // game.turnSpeedAdjustmentFactor;
+    if (this.hardCollision) {
+      // In case of hard collision, do not move forward, just turn towards new direction
+      if (Math.abs(difference) > turnAmount) {
+        this.direction = wrapDirection(this.direction + turnAmount * Math.abs(difference) / difference, this.directions);
+      }
+    } else {
+      // Otherwise, move forward, but keep turning as needed
+      var movement = this.speed * SPEEDADJUSTMENTFACTOR;
+      var angleRadians = -(Math.round(this.direction) / this.directions) * 2 * Math.PI;
+      this.lastMovementX = -(movement * Math.sin(angleRadians));
+      this.lastMovementY = -(movement * Math.cos(angleRadians));
+      this.x = (this.x + this.lastMovementX);
+      this.y = (this.y + this.lastMovementY);
+      if (Math.abs(difference) > turnAmount) {
+        this.direction = wrapDirection(this.direction + turnAmount * Math.abs(difference) / difference, this.directions);
+      }
+    }
     return true;
   },
 
-  getGrid: function(point){
+  getGrid: function(point) {
     /**
      * Gets the current point the unit in grid space.
      */
     var x = Math.floor(point.x / this.gridSize);
     var y = Math.floor(point.y / this.gridSize);
-    return [x, y];    
+    return [x, y];
   },
 
   getCenterOfGrid: function(gridSquare) {
@@ -135,16 +277,16 @@ Movable.prototype = {
      * Given a grid point, gets the center in game space.
      */
     var rect = {
-      x: gridSquare.x * this.gridSize + this.gridSize / 2, // get the center,
-      y: gridSquare.y * this.gridSize + this.gridSize / 2 // get the center
-    }
-    // rect.x = 
-    // rect.y = 
+        x: gridSquare.x * this.gridSize + this.gridSize / 2, // get the center,
+        y: gridSquare.y * this.gridSize + this.gridSize / 2 // get the center
+      }
+      // rect.x = 
+      // rect.y = 
     return rect;
   },
 
 
-  moveTo: function(point){
+  moveTo: function(point) {
     /**
      * Point to move to in pixel space
      */
@@ -152,8 +294,13 @@ Movable.prototype = {
   },
 
   moveTowards: function(target) {
+
+
+    //==========================================================================
     var y = target.y - this.centery();
     var x = target.x - this.centerx();
+    // var y = target.y - this.y;
+    // var x = target.x - this.x;
     var distance = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
     var speed = 3;
     var fullCircle = Math.PI * 2;
